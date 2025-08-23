@@ -159,25 +159,23 @@
 
         .post-actions {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+            justify-content: center;
         }
 
         .download-btn {
             background-color: transparent;
             color: var(--text-color);
             border: 2px solid var(--accent-color);
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: var(--border-radius);
             cursor: pointer;
             transition: var(--transition);
             font-weight: bold;
             text-align: center;
             text-decoration: none;
-            flex: 1;
             position: relative;
             overflow: hidden;
+            min-width: 140px;
         }
 
         .download-btn:hover:not(.downloading, .downloaded) {
@@ -197,6 +195,7 @@
             background-color: var(--accent-color);
             width: 0%;
             transition: width 0.1s linear;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
         }
 
         .download-btn.downloading {
@@ -207,38 +206,7 @@
         .download-btn.downloaded {
             background-color: rgba(0, 255, 0, 0.1);
             border-color: rgba(0, 255, 0, 0.5);
-        }
-
-        .like-btn {
-            background-color: transparent;
-            color: var(--text-color);
-            border: 2px solid var(--accent-color);
-            padding: 10px 15px;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 70px;
-            justify-content: center;
-        }
-
-        .like-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .like-btn:active {
-            transform: scale(0.95);
-        }
-
-        .like-btn.liked {
-            background-color: rgba(255, 0, 0, 0.1);
-            border-color: rgba(255, 0, 0, 0.5);
-        }
-
-        .like-icon {
-            font-size: 1.2rem;
+            color: rgba(0, 255, 0, 0.8);
         }
 
         .tabs-container {
@@ -357,12 +325,9 @@
                 font-size: 1.2rem;
             }
             
-            .post-actions {
-                flex-direction: column;
-            }
-            
-            .download-btn, .like-btn {
+            .download-btn {
                 width: 100%;
+                padding: 10px 20px;
             }
         }
 
@@ -401,12 +366,8 @@
         const CONFIG = {
             GITHUB_USERNAME: 'opiumsex', // Замените на ваш GitHub username
             REPOSITORY_NAME: 'opiumsex.github.io', // Замените на название вашего репозитория
-            BRANCH: 'main',
-            GITHUB_TOKEN: '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' // Токен для доступа к GitHub API
+            BRANCH: 'main' // Ветка по умолчанию
         };
-
-        // Хранилище для лайков
-        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
 
         // Вспомогательные функции
         function showNotification(message, isError = false) {
@@ -418,17 +379,6 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
-        }
-
-        function base64Encode(str) {
-            return btoa(unescape(encodeURIComponent(str)));
-        }
-
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -586,18 +536,6 @@
                     const descResponse = await fetch(`${baseUrl}/text.txt`);
                     const description = descResponse.ok ? await descResponse.text() : 'Описание отсутствует';
                     
-                    // Загружаем количество лайков
-                    let likes = 0;
-                    try {
-                        const likesResponse = await fetch(`${baseUrl}/like.txt?t=${Date.now()}`);
-                        if (likesResponse.ok) {
-                            const likesText = await likesResponse.text();
-                            likes = parseInt(likesText) || 0;
-                        }
-                    } catch (e) {
-                        console.log('Файл лайков не найден');
-                    }
-                    
                     // Находим все изображения
                     const images = [];
                     let imageIndex = 0;
@@ -630,7 +568,6 @@
                         description: description.trim(),
                         images: images,
                         file: fileUrl,
-                        likes: likes,
                         folderName: folderName
                     };
                 } catch (error) {
@@ -689,10 +626,8 @@
             function createSkinPostElement(data, folderName) {
                 const post = document.createElement('div');
                 post.className = 'post';
-                post.dataset.folder = folderName;
                 
                 const galleryHtml = createGalleryHtml(data.images);
-                const isLiked = likedPosts[folderName] === true;
                 
                 let html = `
                     ${galleryHtml}
@@ -703,21 +638,12 @@
                             Скачать
                             <div class="download-progress"></div>
                         </button>
-                        <button class="like-btn ${isLiked ? 'liked' : ''}" data-folder="${folderName}">
-                            <span class="like-icon">❤</span>
-                            <span class="like-count">${data.likes}</span>
-                        </button>
                     </div>
                 `;
                 
                 post.innerHTML = html;
                 
                 initGallery(post.querySelector('.gallery-container'));
-                
-                const likeBtn = post.querySelector('.like-btn');
-                likeBtn.addEventListener('click', function() {
-                    handleLike(this, folderName, data.likes);
-                });
                 
                 const downloadBtn = post.querySelector('.download-btn');
                 downloadBtn.addEventListener('click', function() {
@@ -852,130 +778,33 @@
                 }
             }
             
-            // Обработчик лайков
-            async function handleLike(button, folderName, currentLikes) {
-                if (likedPosts[folderName]) {
-                    showNotification('Вы уже лайкнули этот пост!');
-                    return;
-                }
-                
-                try {
-                    const likeCountElement = button.querySelector('.like-count');
-                    
-                    // Увеличиваем счетчик локально
-                    currentLikes++;
-                    likeCountElement.textContent = currentLikes;
-                    button.classList.add('liked');
-                    
-                    // Сохраняем в localStorage
-                    likedPosts[folderName] = true;
-                    localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
-                    
-                    // Обновляем файл на GitHub
-                    const success = await updateLikesOnGitHub(folderName, currentLikes);
-                    
-                    if (success) {
-                        showNotification('Лайк добавлен!');
-                    } else {
-                        // Откатываем изменения при ошибке
-                        currentLikes--;
-                        likeCountElement.textContent = currentLikes;
-                        button.classList.remove('liked');
-                        delete likedPosts[folderName];
-                        localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
-                        showNotification('Ошибка при добавлении лайка', true);
-                    }
-                    
-                } catch (error) {
-                    console.error('Ошибка при обновлении лайков:', error);
-                    showNotification('Ошибка при добавлении лайка', true);
-                }
-            }
-            
-            // Реальная реализация обновления лайков на GitHub
-            async function updateLikesOnGitHub(folderName, likesCount) {
-                try {
-                    const likesFilePath = `skins/${folderName}/like.txt`;
-                    const likesContent = likesCount.toString();
-                    
-                    // Проверяем существование файла
-                    let sha = null;
-                    try {
-                        const existingFileResponse = await fetch(
-                            `https://api.github.com/repos/${CONFIG.GITHUB_USERNAME}/${CONFIG.REPOSITORY_NAME}/contents/${likesFilePath}?ref=${CONFIG.BRANCH}`,
-                            {
-                                headers: {
-                                    'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-                                    'Accept': 'application/vnd.github.v3+json'
-                                }
-                            }
-                        );
-                        
-                        if (existingFileResponse.ok) {
-                            const fileData = await existingFileResponse.json();
-                            sha = fileData.sha;
-                        }
-                    } catch (e) {
-                        // Файл не существует, это нормально
-                    }
-                    
-                    // Создаем или обновляем файл
-                    const response = await fetch(
-                        `https://api.github.com/repos/${CONFIG.GITHUB_USERNAME}/${CONFIG.REPOSITORY_NAME}/contents/${likesFilePath}`,
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                message: `Update likes for ${folderName}`,
-                                content: base64Encode(likesContent),
-                                branch: CONFIG.BRANCH,
-                                sha: sha
-                            })
-                        }
-                    );
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error('GitHub API Error:', errorData);
-                        return false;
-                    }
-                    
-                    return true;
-                    
-                } catch (error) {
-                    console.error('Ошибка при обновлении лайков на GitHub:', error);
-                    return false;
-                }
-            }
-            
-            // Обработчик скачивания
+            // Обработчик скачивания с исправленным CD
             async function handleDownload(button, fileUrl, fileName) {
                 if (button.classList.contains('downloading') || button.classList.contains('downloaded')) {
                     return;
                 }
                 
+                // Блокируем кнопку
                 button.classList.add('downloading');
-                button.textContent = 'Началось скачивание';
+                const originalText = button.textContent;
+                button.innerHTML = 'Началось скачивание<div class="download-progress"></div>';
                 
                 const progressBar = button.querySelector('.download-progress');
                 let progress = 0;
+                const totalTime = 5000; // 5 секунд
+                const intervalTime = 50; // обновление каждые 50ms
+                const steps = totalTime / intervalTime;
                 
+                // Запускаем прогресс-бар
                 const interval = setInterval(() => {
-                    progress += 1;
-                    progressBar.style.width = `${progress}%`;
+                    progress += (100 / steps);
+                    progressBar.style.width = `${Math.min(progress, 100)}%`;
                     
                     if (progress >= 100) {
                         clearInterval(interval);
                         
+                        // Скачиваем файл
                         setTimeout(() => {
-                            button.classList.remove('downloading');
-                            button.classList.add('downloaded');
-                            button.textContent = 'Файл скачан';
-                            
                             const a = document.createElement('a');
                             a.href = fileUrl;
                             a.download = fileName + '.zip';
@@ -983,15 +812,23 @@
                             a.click();
                             document.body.removeChild(a);
                             
+                            // Меняем состояние кнопки
+                            button.classList.remove('downloading');
+                            button.classList.add('downloaded');
+                            button.innerHTML = 'Файл скачан<div class="download-progress" style="width: 100%"></div>';
+                            
+                            // Возвращаем исходное состояние через 3 секунды
                             setTimeout(() => {
                                 button.classList.remove('downloaded');
-                                button.textContent = 'Скачать';
-                                progressBar.style.width = '0%';
-                            }, 5000);
+                                button.textContent = originalText;
+                                const newProgressBar = document.createElement('div');
+                                newProgressBar.className = 'download-progress';
+                                button.appendChild(newProgressBar);
+                            }, 3000);
                             
-                        }, 500);
+                        }, 100);
                     }
-                }, 50);
+                }, intervalTime);
             }
         });
     </script>
