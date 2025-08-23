@@ -32,22 +32,9 @@
             flex-direction: column;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 20px 0;
-            border-bottom: 2px solid var(--accent-color);
-        }
-
-        h1 {
-            font-size: 3rem;
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-        }
-
         .content {
             flex: 1;
-            margin-bottom: 20px;
+            margin-bottom: 80px;
         }
 
         .tab-content {
@@ -80,13 +67,83 @@
             box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
         }
 
-        .post-image {
+        .gallery-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .gallery-slider {
+            display: flex;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--accent-color);
+        }
+
+        .gallery-slide {
+            min-width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-slide img {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            border-radius: var(--border-radius);
-            margin-bottom: 15px;
+            display: block;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            padding: 0 10px;
+            pointer-events: none;
+        }
+
+        .gallery-nav-btn {
+            background-color: rgba(0, 0, 0, 0.5);
             border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: var(--transition);
+        }
+
+        .gallery-nav-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .gallery-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .gallery-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            transition: var(--transition);
+        }
+
+        .gallery-dot.active {
+            background-color: var(--accent-color);
+            transform: scale(1.2);
         }
 
         .post-title {
@@ -100,6 +157,13 @@
             flex-grow: 1;
         }
 
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
         .download-btn {
             background-color: transparent;
             color: var(--text-color);
@@ -111,15 +175,70 @@
             font-weight: bold;
             text-align: center;
             text-decoration: none;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
         }
 
-        .download-btn:hover {
+        .download-btn:hover:not(.downloading, .downloaded) {
             background-color: var(--accent-color);
             color: var(--bg-color);
         }
 
-        .download-btn:active {
+        .download-btn:active:not(.downloading, .downloaded) {
             transform: scale(0.95);
+        }
+
+        .download-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .download-btn.downloading {
+            cursor: not-allowed;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .download-btn.downloaded {
+            background-color: rgba(0, 255, 0, 0.1);
+            border-color: rgba(0, 255, 0, 0.5);
+        }
+
+        .like-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 2px solid var(--accent-color);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 70px;
+            justify-content: center;
+        }
+
+        .like-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .like-btn:active {
+            transform: scale(0.95);
+        }
+
+        .like-btn.liked {
+            background-color: rgba(255, 0, 0, 0.1);
+            border-color: rgba(255, 0, 0, 0.5);
+        }
+
+        .like-icon {
+            font-size: 1.2rem;
         }
 
         .tabs-container {
@@ -191,28 +310,52 @@
             to { opacity: 1; }
         }
 
+        /* Адаптивность для мобильных устройств */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
             .posts-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .post {
+                padding: 15px;
+            }
+            
+            .gallery-slide img {
+                height: 180px;
             }
             
             .tab-button {
                 padding: 10px 15px;
                 font-size: 1rem;
+                margin: 0 5px;
             }
             
-            h1 {
-                font-size: 2rem;
+            .post-title {
+                font-size: 1.2rem;
+            }
+            
+            .post-actions {
+                flex-direction: column;
+            }
+            
+            .download-btn, .like-btn {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .posts-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>SPAXE FILES</h1>
-        <p>Качественный контент для вашего проекта</p>
-    </header>
-
     <div class="content">
         <div class="tab-content active" id="skins-content">
             <div class="loading">Загрузка скинов...</div>
@@ -240,6 +383,9 @@
             REPOSITORY_NAME: 'opiumsex.github.io', // Замените на название вашего репозитория
             BRANCH: 'main' // Ветка по умолчанию
         };
+
+        // Хранилище для лайков
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
 
         document.addEventListener('DOMContentLoaded', function() {
             // Управление вкладками
@@ -277,7 +423,7 @@
                     tabSlider.style.width = `${width}px`;
                     tabSlider.style.left = `${left}px`;
                     
-                    // Загружаем данные для вкладки, если они еще не загружены
+                    // Загружаем данные для вкладки
                     if (tabId === 'skins') {
                         loadSkins();
                     } else if (tabId === 'news') {
@@ -320,7 +466,7 @@
                             try {
                                 const skinData = await loadSkinData(folder.name);
                                 if (skinData) {
-                                    const postElement = createPostElement(skinData, true);
+                                    const postElement = createSkinPostElement(skinData, folder.name);
                                     skinsContainer.appendChild(postElement);
                                 }
                             } catch (error) {
@@ -362,7 +508,7 @@
                             try {
                                 const newsData = await loadNewsData(folder.name);
                                 if (newsData) {
-                                    const postElement = createPostElement(newsData, false);
+                                    const postElement = createNewsPostElement(newsData, folder.name);
                                     newsContainer.appendChild(postElement);
                                 }
                             } catch (error) {
@@ -391,13 +537,7 @@
                     return await response.json();
                 } catch (error) {
                     console.error('Ошибка получения содержимого папки:', error);
-                    
-                    // Fallback: используем mock данные если GitHub API недоступен
-                    return [
-                        { name: 'skin1', type: 'dir' },
-                        { name: 'skin2', type: 'dir' },
-                        { name: 'skin3', type: 'dir' }
-                    ];
+                    return [];
                 }
             }
             
@@ -414,8 +554,45 @@
                     const descResponse = await fetch(`${baseUrl}/text.txt`);
                     const description = descResponse.ok ? await descResponse.text() : 'Описание отсутствует';
                     
-                    // Формируем URL изображения
-                    const imageUrl = `${baseUrl}/logo.png`;
+                    // Загружаем количество лайков
+                    let likes = 0;
+                    try {
+                        const likesResponse = await fetch(`${baseUrl}/like.txt`);
+                        if (likesResponse.ok) {
+                            const likesText = await likesResponse.text();
+                            likes = parseInt(likesText) || 0;
+                        }
+                    } catch (e) {
+                        console.log('Файл лайков не найден, будет создан при первом лайке');
+                    }
+                    
+                    // Находим все изображения
+                    const images = [];
+                    let imageIndex = 0;
+                    
+                    // Проверяем наличие изображений (logo.png, logo1.png, logo2.png, и т.д.)
+                    while (true) {
+                        const imageUrl = imageIndex === 0 ? 
+                            `${baseUrl}/logo.png` : 
+                            `${baseUrl}/logo${imageIndex}.png`;
+                            
+                        // Проверяем существование изображения
+                        const testResponse = await fetch(imageUrl, { method: 'HEAD' });
+                        if (testResponse.ok) {
+                            images.push(imageUrl);
+                            imageIndex++;
+                        } else {
+                            break;
+                        }
+                        
+                        // Ограничим максимальное количество проверок
+                        if (imageIndex > 20) break;
+                    }
+                    
+                    // Если изображений не найдено, используем placeholder
+                    if (images.length === 0) {
+                        images.push('https://via.placeholder.com/300x200/222/fff?text=Нет+изображения');
+                    }
                     
                     // Формируем URL файла
                     const fileUrl = `${baseUrl}/file.zip`;
@@ -423,8 +600,10 @@
                     return {
                         title: title.trim(),
                         description: description.trim(),
-                        image: imageUrl,
-                        file: fileUrl
+                        images: images,
+                        file: fileUrl,
+                        likes: likes,
+                        folderName: folderName
                     };
                 } catch (error) {
                     console.error(`Ошибка загрузки данных скина ${folderName}:`, error);
@@ -445,13 +624,35 @@
                     const descResponse = await fetch(`${baseUrl}/text.txt`);
                     const description = descResponse.ok ? await descResponse.text() : 'Описание отсутствует';
                     
-                    // Формируем URL изображения
-                    const imageUrl = `${baseUrl}/logo.png`;
+                    // Находим все изображения
+                    const images = [];
+                    let imageIndex = 0;
+                    
+                    while (true) {
+                        const imageUrl = imageIndex === 0 ? 
+                            `${baseUrl}/logo.png` : 
+                            `${baseUrl}/logo${imageIndex}.png`;
+                            
+                        const testResponse = await fetch(imageUrl, { method: 'HEAD' });
+                        if (testResponse.ok) {
+                            images.push(imageUrl);
+                            imageIndex++;
+                        } else {
+                            break;
+                        }
+                        
+                        if (imageIndex > 20) break;
+                    }
+                    
+                    if (images.length === 0) {
+                        images.push('https://via.placeholder.com/300x200/222/fff?text=Нет+изображения');
+                    }
                     
                     return {
                         title: title.trim(),
                         description: description.trim(),
-                        image: imageUrl
+                        images: images,
+                        folderName: folderName
                     };
                 } catch (error) {
                     console.error(`Ошибка загрузки данных новости ${folderName}:`, error);
@@ -459,23 +660,267 @@
                 }
             }
             
-            // Функция создания элемента поста
-            function createPostElement(data, isSkin) {
+            // Функция создания элемента поста скина
+            function createSkinPostElement(data, folderName) {
+                const post = document.createElement('div');
+                post.className = 'post';
+                post.dataset.folder = folderName;
+                
+                // Создаем галерею
+                const galleryHtml = createGalleryHtml(data.images);
+                
+                const isLiked = likedPosts[folderName] === true;
+                
+                let html = `
+                    ${galleryHtml}
+                    <h3 class="post-title">${data.title}</h3>
+                    <p class="post-description">${data.description}</p>
+                    <div class="post-actions">
+                        <button class="download-btn" data-file="${data.file}">
+                            Скачать
+                            <div class="download-progress"></div>
+                        </button>
+                        <button class="like-btn ${isLiked ? 'liked' : ''}" data-folder="${folderName}">
+                            <span class="like-icon">❤</span>
+                            <span class="like-count">${data.likes}</span>
+                        </button>
+                    </div>
+                `;
+                
+                post.innerHTML = html;
+                
+                // Инициализируем галерею
+                initGallery(post.querySelector('.gallery-container'));
+                
+                // Добавляем обработчик для лайка
+                const likeBtn = post.querySelector('.like-btn');
+                likeBtn.addEventListener('click', function() {
+                    handleLike(this, folderName);
+                });
+                
+                // Добавляем обработчик для скачивания
+                const downloadBtn = post.querySelector('.download-btn');
+                downloadBtn.addEventListener('click', function() {
+                    handleDownload(this, data.file, data.title);
+                });
+                
+                return post;
+            }
+            
+            // Функция создания элемента поста новости
+            function createNewsPostElement(data, folderName) {
                 const post = document.createElement('div');
                 post.className = 'post';
                 
+                // Создаем галерею
+                const galleryHtml = createGalleryHtml(data.images);
+                
                 let html = `
-                    <img src="${data.image}" alt="${data.title}" class="post-image" onerror="this.src='https://via.placeholder.com/300x200/222/fff?text=Изображение+не+загружено'">
+                    ${galleryHtml}
                     <h3 class="post-title">${data.title}</h3>
                     <p class="post-description">${data.description}</p>
                 `;
                 
-                if (isSkin) {
-                    html += `<a href="${data.file}" class="download-btn" download>Скачать</a>`;
+                post.innerHTML = html;
+                
+                // Инициализируем галерею
+                initGallery(post.querySelector('.gallery-container'));
+                
+                return post;
+            }
+            
+            // Функция создания HTML для галереи
+            function createGalleryHtml(images) {
+                if (images.length === 1) {
+                    return `
+                        <div class="gallery-container">
+                            <div class="gallery-slider">
+                                <div class="gallery-slide">
+                                    <img src="${images[0]}" alt="Изображение" onerror="this.src='https://via.placeholder.com/300x200/222/fff?text=Ошибка+загрузки'">
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 }
                 
-                post.innerHTML = html;
-                return post;
+                let slidesHtml = '';
+                let dotsHtml = '';
+                
+                images.forEach((img, index) => {
+                    slidesHtml += `
+                        <div class="gallery-slide">
+                            <img src="${img}" alt="Изображение ${index + 1}" onerror="this.src='https://via.placeholder.com/300x200/222/fff?text=Ошибка+загрузки'">
+                        </div>
+                    `;
+                    
+                    dotsHtml += `<div class="gallery-dot ${index === 0 ? 'active' : ''}"></div>`;
+                });
+                
+                return `
+                    <div class="gallery-container">
+                        <div class="gallery-slider">
+                            ${slidesHtml}
+                        </div>
+                        <div class="gallery-nav">
+                            <button class="gallery-nav-btn prev">❮</button>
+                            <button class="gallery-nav-btn next">❯</button>
+                        </div>
+                        <div class="gallery-dots">
+                            ${dotsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Инициализация галереи
+            function initGallery(container) {
+                const slider = container.querySelector('.gallery-slider');
+                const slides = container.querySelectorAll('.gallery-slide');
+                const dots = container.querySelectorAll('.gallery-dot');
+                const prevBtn = container.querySelector('.prev');
+                const nextBtn = container.querySelector('.next');
+                
+                if (slides.length <= 1) {
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                    if (container.querySelector('.gallery-dots')) {
+                        container.querySelector('.gallery-dots').style.display = 'none';
+                    }
+                    return;
+                }
+                
+                let currentSlide = 0;
+                
+                function updateSlide() {
+                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+                    
+                    dots.forEach((dot, index) => {
+                        dot.classList.toggle('active', index === currentSlide);
+                    });
+                }
+                
+                function nextSlide() {
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    updateSlide();
+                }
+                
+                function prevSlide() {
+                    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                    updateSlide();
+                }
+                
+                if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+                if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+                
+                // Добавляем свайпы для мобильных устройств
+                let startX = 0;
+                let endX = 0;
+                
+                slider.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                });
+                
+                slider.addEventListener('touchend', (e) => {
+                    endX = e.changedTouches[0].clientX;
+                    handleSwipe();
+                });
+                
+                function handleSwipe() {
+                    const diff = startX - endX;
+                    
+                    if (diff > 50) {
+                        nextSlide();
+                    } else if (diff < -50) {
+                        prevSlide();
+                    }
+                }
+            }
+            
+            // Обработчик лайков
+            async function handleLike(button, folderName) {
+                if (likedPosts[folderName]) {
+                    alert('Вы уже лайкнули этот пост!');
+                    return;
+                }
+                
+                try {
+                    const likeCountElement = button.querySelector('.like-count');
+                    let currentLikes = parseInt(likeCountElement.textContent);
+                    
+                    // Увеличиваем счетчик
+                    currentLikes++;
+                    likeCountElement.textContent = currentLikes;
+                    
+                    // Добавляем визуальный эффект
+                    button.classList.add('liked');
+                    
+                    // Сохраняем в localStorage
+                    likedPosts[folderName] = true;
+                    localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+                    
+                    // Обновляем файл на GitHub
+                    await updateLikesOnGitHub(folderName, currentLikes);
+                    
+                } catch (error) {
+                    console.error('Ошибка при обновлении лайков:', error);
+                    alert('Ошибка при обновлении лайков. Попробуйте еще раз.');
+                }
+            }
+            
+            // Обновление лайков на GitHub
+            async function updateLikesOnGitHub(folderName, likesCount) {
+                // В реальном проекте здесь будет вызов GitHub API
+                // Для демонстрации просто эмулируем успешное обновление
+                console.log(`Обновление лайков для ${folderName}: ${likesCount}`);
+                
+                // В реальной реализации здесь должен быть fetch к GitHub API
+                // для создания/обновления файла like.txt в папке скина
+            }
+            
+            // Обработчик скачивания
+            async function handleDownload(button, fileUrl, fileName) {
+                if (button.classList.contains('downloading') || button.classList.contains('downloaded')) {
+                    return;
+                }
+                
+                button.classList.add('downloading');
+                button.textContent = 'Началось скачивание';
+                
+                const progressBar = button.querySelector('.download-progress');
+                let progress = 0;
+                
+                // Анимация прогресса
+                const interval = setInterval(() => {
+                    progress += 1;
+                    progressBar.style.width = `${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        
+                        // Имитация скачивания
+                        setTimeout(() => {
+                            button.classList.remove('downloading');
+                            button.classList.add('downloaded');
+                            button.textContent = 'Файл скачан';
+                            
+                            // Создаем временную ссылку для скачивания
+                            const a = document.createElement('a');
+                            a.href = fileUrl;
+                            a.download = fileName + '.zip';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            
+                            // Через 5 секунд возвращаем обычное состояние
+                            setTimeout(() => {
+                                button.classList.remove('downloaded');
+                                button.textContent = 'Скачать';
+                                progressBar.style.width = '0%';
+                            }, 5000);
+                            
+                        }, 500);
+                    }
+                }, 50);
             }
         });
     </script>
