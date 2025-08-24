@@ -60,6 +60,7 @@
             transition: var(--transition);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .post:hover {
@@ -71,25 +72,49 @@
             position: relative;
             width: 100%;
             margin-bottom: 15px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid var(--accent-color);
         }
 
         .gallery-slider {
             display: flex;
-            overflow: hidden;
-            border-radius: var(--border-radius);
-            border: 1px solid var(--accent-color);
+            width: 100%;
+            height: 200px;
+            position: relative;
         }
 
         .gallery-slide {
             min-width: 100%;
-            transition: transform 0.3s ease;
+            height: 100%;
+            flex-shrink: 0;
+            transition: transform 0.4s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+        }
+
+        .gallery-slide.active {
+            opacity: 1;
+            position: relative;
+            transform: translateX(0);
+        }
+
+        .gallery-slide.next {
+            transform: translateX(100%);
+        }
+
+        .gallery-slide.prev {
+            transform: translateX(-100%);
         }
 
         .gallery-slide img {
             width: 100%;
-            height: 200px;
+            height: 100%;
             object-fit: cover;
             display: block;
+            border-radius: var(--border-radius);
         }
 
         .gallery-nav {
@@ -101,6 +126,7 @@
             transform: translateY(-50%);
             padding: 0 10px;
             pointer-events: none;
+            z-index: 2;
         }
 
         .gallery-nav-btn {
@@ -131,6 +157,7 @@
             display: flex;
             justify-content: center;
             gap: 8px;
+            z-index: 2;
         }
 
         .gallery-dot {
@@ -139,6 +166,7 @@
             border-radius: 50%;
             background-color: rgba(255, 255, 255, 0.5);
             transition: var(--transition);
+            cursor: pointer;
         }
 
         .gallery-dot.active {
@@ -273,24 +301,6 @@
             font-size: 1.2rem;
         }
 
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: var(--border-radius);
-            background-color: rgba(0, 0, 0, 0.9);
-            border: 2px solid var(--accent-color);
-            color: var(--text-color);
-            z-index: 1000;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -311,7 +321,7 @@
                 padding: 15px;
             }
             
-            .gallery-slide img {
+            .gallery-slider {
                 height: 180px;
             }
             
@@ -339,8 +349,6 @@
     </style>
 </head>
 <body>
-    <div id="notification" class="notification"></div>
-
     <div class="content">
         <div class="tab-content active" id="skins-content">
             <div class="loading">Загрузка скинов...</div>
@@ -368,18 +376,6 @@
             REPOSITORY_NAME: 'opiumsex.github.io', // Замените на название вашего репозитория
             BRANCH: 'main' // Ветка по умолчанию
         };
-
-        // Вспомогательные функции
-        function showNotification(message, isError = false) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.borderColor = isError ? '#ff4444' : 'var(--accent-color)';
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
 
         document.addEventListener('DOMContentLoaded', function() {
             // Управление вкладками
@@ -518,7 +514,6 @@
                     return await response.json();
                 } catch (error) {
                     console.error('Ошибка получения содержимого папки:', error);
-                    showNotification('Ошибка загрузки данных', true);
                     return [];
                 }
             }
@@ -678,7 +673,7 @@
                     return `
                         <div class="gallery-container">
                             <div class="gallery-slider">
-                                <div class="gallery-slide">
+                                <div class="gallery-slide active">
                                     <img src="${images[0]}" alt="Изображение" onerror="this.src='https://via.placeholder.com/300x200/222/fff?text=Ошибка+загрузки'">
                                 </div>
                             </div>
@@ -690,13 +685,15 @@
                 let dotsHtml = '';
                 
                 images.forEach((img, index) => {
+                    const activeClass = index === 0 ? 'active' : '';
                     slidesHtml += `
-                        <div class="gallery-slide">
+                        <div class="gallery-slide ${activeClass}">
                             <img src="${img}" alt="Изображение ${index + 1}" onerror="this.src='https://via.placeholder.com/300x200/222/fff?text=Ошибка+загрузки'">
                         </div>
                     `;
                     
-                    dotsHtml += `<div class="gallery-dot ${index === 0 ? 'active' : ''}"></div>`;
+                    const dotActiveClass = index === 0 ? 'active' : '';
+                    dotsHtml += `<div class="gallery-dot ${dotActiveClass}" data-index="${index}"></div>`;
                 });
                 
                 return `
@@ -715,9 +712,8 @@
                 `;
             }
             
-            // Инициализация галереи
+            // Инициализация галереи с плавными переходами
             function initGallery(container) {
-                const slider = container.querySelector('.gallery-slider');
                 const slides = container.querySelectorAll('.gallery-slide');
                 const dots = container.querySelectorAll('.gallery-dot');
                 const prevBtn = container.querySelector('.prev');
@@ -734,35 +730,49 @@
                 
                 let currentSlide = 0;
                 
-                function updateSlide() {
-                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+                function updateSlide(newIndex) {
+                    // Убираем активный класс у текущего слайда
+                    slides[currentSlide].classList.remove('active');
+                    dots[currentSlide].classList.remove('active');
                     
-                    dots.forEach((dot, index) => {
-                        dot.classList.toggle('active', index === currentSlide);
-                    });
+                    // Устанавливаем новый текущий слайд
+                    currentSlide = newIndex;
+                    
+                    // Добавляем активный класс новому слайду
+                    slides[currentSlide].classList.add('active');
+                    dots[currentSlide].classList.add('active');
                 }
                 
                 function nextSlide() {
-                    currentSlide = (currentSlide + 1) % slides.length;
-                    updateSlide();
+                    const newIndex = (currentSlide + 1) % slides.length;
+                    updateSlide(newIndex);
                 }
                 
                 function prevSlide() {
-                    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-                    updateSlide();
+                    const newIndex = (currentSlide - 1 + slides.length) % slides.length;
+                    updateSlide(newIndex);
                 }
                 
+                // Обработчики для кнопок
                 if (prevBtn) prevBtn.addEventListener('click', prevSlide);
                 if (nextBtn) nextBtn.addEventListener('click', nextSlide);
                 
+                // Обработчики для точек
+                dots.forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        updateSlide(index);
+                    });
+                });
+                
+                // Свайпы для мобильных устройств
                 let startX = 0;
                 let endX = 0;
                 
-                slider.addEventListener('touchstart', (e) => {
+                container.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
                 });
                 
-                slider.addEventListener('touchend', (e) => {
+                container.addEventListener('touchend', (e) => {
                     endX = e.changedTouches[0].clientX;
                     handleSwipe();
                 });
@@ -778,7 +788,7 @@
                 }
             }
             
-            // Обработчик скачивания с исправленным CD
+            // Обработчик скачивания
             async function handleDownload(button, fileUrl, fileName) {
                 if (button.classList.contains('downloading') || button.classList.contains('downloaded')) {
                     return;
@@ -791,8 +801,8 @@
                 
                 const progressBar = button.querySelector('.download-progress');
                 let progress = 0;
-                const totalTime = 5000; // 5 секунд
-                const intervalTime = 50; // обновление каждые 50ms
+                const totalTime = 5000;
+                const intervalTime = 50;
                 const steps = totalTime / intervalTime;
                 
                 // Запускаем прогресс-бар
