@@ -1,1 +1,6 @@
-{ "title": "Тест какашке", "description": "ХИЗЕКС ГЕЙ", "image": "logo.png" }
+{
+    "Title": "Новости о проекте",
+    "Description": "Это описание первого поста, рассказывающее о последних обновлениях.",
+    "ImageUrl": "https://yourusername.github.io/yourrepo/news/post1/logo.png",
+    "DownloadUrl": ""
+}
